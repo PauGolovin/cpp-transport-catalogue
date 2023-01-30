@@ -4,21 +4,39 @@
 #include <string>
 #include <stdexcept>
 #include "input_reader.h"
+#include "stat_reader.h"
 
 using namespace std;
+using namespace transportCatalogue;
 
 void InputCommand(istream& is, ostream& os, TransportCatalogue& tc) {
 	int query_count = 0;
 	string KOCTblLb;
 	while (getline(is, KOCTblLb)) {
 		query_count = stoi(KOCTblLb);
-		QueryQueue qq(tc);
 		string query;
-		for (int i = 0; i < query_count; ++i) {
-			getline(is, query);
-			qq.DistributeCommand(query);
+		getline(is, query);
+		auto pos = query.find(':');
+		if (pos != query.npos) {
+			inputReader::QueryQueue qq(tc);
+			int i = 0;
+			do {
+				qq.DistributeCommand(query);
+				getline(is, query);
+				++i;
+			} while (i < query_count);
+			qq.QueuePromotion();
 		}
-		qq.QueuePromotion(os);
+		else {
+			statReader::QueryQueue qq(tc, os);
+			int i = 0;
+			do {
+				qq.DistributeCommand(query);
+				getline(is, query);
+				++i;
+			} while (i < query_count);
+			qq.QueuePromotion();
+		}
 	}
 }
 
@@ -70,8 +88,7 @@ void FullTest() {
 }
 
 int main() {
-	/*InputTests::TInputTests();
-	FullTest();*/
+	FullTest();
 	TransportCatalogue tc;
 	InputCommand(cin, cout, tc);
 	return 0;
