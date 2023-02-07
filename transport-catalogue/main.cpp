@@ -1,95 +1,68 @@
-#include <iostream>
-#include <cassert>
+#include "json_reader.h"
+
 #include <sstream>
-#include <string>
-#include <stdexcept>
-#include "input_reader.h"
-#include "stat_reader.h"
+#include <cassert>
 
 using namespace std;
-using namespace transportCatalogue;
+using namespace transport_catalogue;
 
-void InputCommand(istream& is, ostream& os, TransportCatalogue& tc) {
-	int query_count = 0;
-	string KOCTblLb;
-	while (getline(is, KOCTblLb)) {
-		query_count = stoi(KOCTblLb);
-		string query;
-		getline(is, query);
-		auto pos = query.find(':');
-		if (pos != query.npos) {
-			inputReader::QueryQueue qq(tc);
-			int i = 0;
-			do {
-				qq.DistributeCommand(query);
-				getline(is, query);
-				++i;
-			} while (i < query_count);
-			qq.QueuePromotion();
-		}
-		else {
-			statReader::QueryQueue qq(tc, os);
-			int i = 0;
-			do {
-				qq.DistributeCommand(query);
-				getline(is, query);
-				++i;
-			} while (i < query_count);
-			qq.QueuePromotion();
-		}
-	}
-}
-
-void FullTest() {
-	TransportCatalogue tc;
-	stringstream oss;
-	istringstream iss1{
-		"13\n"
-		"Stop Tolstopaltsevo: 55.611087, 37.20829, 3900m to Marushkino\n"
-		"Stop Marushkino: 55.595884, 37.209755, 9900m to Rasskazovka, 100m to Marushkino\n"
-		"Bus 256: Biryulyovo Zapadnoye > Biryusinka > Universam > Biryulyovo Tovarnaya > Biryulyovo Passazhirskaya > Biryulyovo Zapadnoye\n"
-		"Bus 750: Tolstopaltsevo - Marushkino - Marushkino - Rasskazovka\n"
-		"Stop Rasskazovka: 55.632761, 37.333324, 9500m to Marushkino\n"
-		"Stop Biryulyovo Zapadnoye: 55.574371, 37.6517, 7500m to Rossoshanskaya ulitsa, 1800m to Biryusinka, 2400m to Universam\n"
-		"Stop Biryusinka: 55.581065, 37.64839, 750m to Universam\n"
-		"Stop Universam: 55.587655, 37.645687, 5600m to Rossoshanskaya ulitsa, 900m to Biryulyovo Tovarnaya\n"
-		"Stop Biryulyovo Tovarnaya: 55.592028, 37.653656, 1300m to Biryulyovo Passazhirskaya\n"
-		"Stop Biryulyovo Passazhirskaya: 55.580999, 37.659164, 1200m to Biryulyovo Zapadnoye\n"
-		"Bus 828: Biryulyovo Zapadnoye > Universam > Rossoshanskaya ulitsa > Biryulyovo Zapadnoye\n"
-		"Stop Rossoshanskaya ulitsa: 55.595579, 37.605757\n"
-		"Stop Prazhskaya: 55.611678, 37.603831"
-	};
-	InputCommand(iss1, oss, tc);
-	istringstream iss2{
-		"6\n"
-		"Bus 256\n"
-		"Bus 750\n"
-		"Bus 751\n"
-		"Stop Samara\n"
-		"Stop Prazhskaya\n"
-		"Stop Biryulyovo Zapadnoye"
-	};
-	InputCommand(iss2, oss, tc);
-	vector<string> answer{
-		"Bus 256: 6 stops on route, 5 unique stops, 5950 route length, 1.36124 curvature",
-		"Bus 750: 7 stops on route, 3 unique stops, 27400 route length, 1.30853 curvature",
-		"Bus 751: not found",
-		"Stop Samara: not found",
-		"Stop Prazhskaya: no buses",
-		"Stop Biryulyovo Zapadnoye: buses 256 828"
-	};
-	vector<string> output_data;
-	string str;
-	while (getline(oss, str)) {
-		output_data.push_back(str);
-	}
-	assert(answer == output_data);
-	cout << "FullTest successful!"s << endl;
+void Test() {
+    TransportCatalogue tc;
+    stringstream oss;
+    istringstream iss{
+        "{\n"
+        "\"base_requests\": [\n"
+        "{\n"
+        "\"type\": \"Bus\",\n"
+        "\"name\" : \"114\",\n"
+        "\"stops\" : [\"Marine Station\", \"Riviera Bridge\"] ,\n"
+        "\"is_roundtrip\" : false\n"
+        "},\n"
+        "{\n"
+        "\"type\": \"Stop\",\n"
+        "\"name\" : \"Riviera Bridge\",\n"
+        "\"latitude\" : 43.587795,\n"
+        "\"longitude\" : 39.716901,\n"
+        "\"road_distances\" : {\"Marine Station\": 850}\n"
+        "},\n"
+        "{\n"
+        "\"type\": \"Stop\",\n"
+        "\"name\" : \"Marine Station\",\n"
+        "\"latitude\" : 43.581969,\n"
+        "\"longitude\" : 39.719848,\n"
+        "\"road_distances\" : {\"Riviera Bridge\": 850}\n"
+        "}\n"
+        "],\n"
+        "\"stat_requests\": [\n"
+        "{ \"id\": 1, \"type\" : \"Stop\", \"name\" : \"Riviera Bridge\" },\n"
+        "{ \"id\": 2, \"type\" : \"Bus\", \"name\" : \"114\" }\n"
+        "]\n"
+        "}"
+    };
+    json_reader::InputCommand(iss, oss, tc);
+    istringstream answer{
+        "[\n"
+        "\t{\n"
+        "\t\t\"buses\" : [\n"
+        "\t\t\t\"114\"\n"
+        "\t\t],\n"
+        "\t\t\"request_id\" : 1\n"
+        "\t},\n"
+        "\t{\n"
+        "\t\t\"curvature\" : 1.23199,\n"
+        "\t\t\"request_id\" : 2,\n"
+        "\t\t\"route_length\" : 1700,\n"
+        "\t\t\"stop_count\" : 3,\n"
+        "\t\t\"unique_stop_count\" : 2\n"
+        "\t}\n"
+        "]\n"
+    };
+    assert(oss.str() == answer.str());
+    cout << "Test successfull" << endl;
 }
 
 int main() {
-	FullTest();
-	TransportCatalogue tc;
-	InputCommand(cin, cout, tc);
-	return 0;
+    //Test();
+    TransportCatalogue tc;
+    json_reader::InputCommand(cin, cout, tc);
 }
