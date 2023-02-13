@@ -23,10 +23,10 @@ namespace renderer {
 
         void SetMapRenderer(const json::Node& render_settings);
 
-        std::vector<svg::Polyline> GetBusLines(const std::vector<const transport_catalogue::TransportCatalogue::Bus*>& buses, const SphereProjector& sp) const;
-        std::vector<svg::Text> GetBusNames(const std::vector<const transport_catalogue::TransportCatalogue::Bus*>& buses, const SphereProjector& sp) const;
-        std::vector<svg::Circle> GetStopCircles(const std::map<std::string_view, const transport_catalogue::TransportCatalogue::Stop*>& stops, const SphereProjector& sp) const;
-        std::vector<svg::Text> GetStopNames(const std::map<std::string_view, const transport_catalogue::TransportCatalogue::Stop*>& stops, const SphereProjector& sp) const;
+        std::vector<svg::Polyline> RenderBusLines(const std::vector<const transport_catalogue::TransportCatalogue::Bus*>& buses, const SphereProjector& sp) const;
+        std::vector<svg::Text> RenderBusNames(const std::vector<const transport_catalogue::TransportCatalogue::Bus*>& buses, const SphereProjector& sp) const;
+        std::vector<svg::Circle> RenderStopCircles(const std::map<std::string_view, const transport_catalogue::TransportCatalogue::Stop*>& stops, const SphereProjector& sp) const;
+        std::vector<svg::Text> RenderStopNames(const std::map<std::string_view, const transport_catalogue::TransportCatalogue::Stop*>& stops, const SphereProjector& sp) const;
 
         void PrintSvgDocument(std::ostream& os) const;
 

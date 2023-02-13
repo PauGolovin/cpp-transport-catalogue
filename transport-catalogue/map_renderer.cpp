@@ -4,9 +4,11 @@ using namespace std::literals;
 using namespace transport_catalogue;
 
 namespace renderer {
+
     void MapRenderer::SetMapRenderer(const json::Node& render_settings) {
         if (render_settings.IsNull()) return;
-        const json::Dict& settings_map = render_settings.AsMap();
+
+        const json::Dict& settings_map = render_settings.AsDict();
         width_ = settings_map.at("width"s).AsDouble();
         height_ = settings_map.at("height"s).AsDouble();
         padding_ = settings_map.at("padding"s).AsDouble();
@@ -20,6 +22,7 @@ namespace renderer {
         const json::Array& stop_label_offset = settings_map.at("stop_label_offset"s).AsArray();
         stop_label_offset_ = { stop_label_offset[0].AsDouble(),
                                stop_label_offset[1].AsDouble() };
+
         if (settings_map.at("underlayer_color"s).IsArray()) {
             const json::Array& arr = settings_map.at("underlayer_color"s).AsArray();
             if (arr.size() == 3) {
@@ -36,7 +39,9 @@ namespace renderer {
             underlayer_color_ = settings_map.at("underlayer_color"s).AsString();
         }
         else throw std::logic_error("Color error"s);
+
         underlayer_width_ = settings_map.at("underlayer_width"s).AsDouble();
+
         const json::Array& color_palette = settings_map.at("color_palette"s).AsArray();
         for (const json::Node& node : color_palette) {
             if (node.IsArray()) {
@@ -57,7 +62,8 @@ namespace renderer {
             else throw std::logic_error("Color error"s);
         }
     }
-    std::vector<svg::Polyline> MapRenderer::GetBusLines(const std::vector<const TransportCatalogue::Bus*>& buses, const SphereProjector& sp) const {
+
+    std::vector<svg::Polyline> MapRenderer::RenderBusLines(const std::vector<const TransportCatalogue::Bus*>& buses, const SphereProjector& sp) const {
         std::vector<svg::Polyline> result;
         unsigned color_num = 0;
         for (const auto& bus_ptr : buses) {
@@ -79,7 +85,8 @@ namespace renderer {
         }
         return result;
     }
-    std::vector<svg::Text> MapRenderer::GetBusNames(const std::vector<const TransportCatalogue::Bus*>& buses, const SphereProjector& sp) const {
+
+    std::vector<svg::Text> MapRenderer::RenderBusNames(const std::vector<const TransportCatalogue::Bus*>& buses, const SphereProjector& sp) const {
         std::vector<svg::Text> result;
         unsigned color_num = 0;
         for (auto& bus_ptr : buses) {
@@ -127,7 +134,8 @@ namespace renderer {
         }
         return result;
     }
-    std::vector<svg::Circle> MapRenderer::GetStopCircles(const std::map<std::string_view, const TransportCatalogue::Stop*>& stops, const SphereProjector& sp) const {
+
+    std::vector<svg::Circle> MapRenderer::RenderStopCircles(const std::map<std::string_view, const TransportCatalogue::Stop*>& stops, const SphereProjector& sp) const {
         std::vector<svg::Circle> result;
         for (auto& [stop_name, stop_ptr] : stops) {
             svg::Circle circle;
@@ -138,7 +146,8 @@ namespace renderer {
         }
         return result;
     }
-    std::vector<svg::Text> MapRenderer::GetStopNames(const std::map<std::string_view, const TransportCatalogue::Stop*>& stops, const SphereProjector& sp) const {
+
+    std::vector<svg::Text> MapRenderer::RenderStopNames(const std::map<std::string_view, const TransportCatalogue::Stop*>& stops, const SphereProjector& sp) const {
         std::vector<svg::Text> result;
         for (auto& [stop_name, stop_ptr] : stops) {
             svg::Text text, text_underlayer;
@@ -177,16 +186,16 @@ namespace renderer {
             }
         }
         SphereProjector sp(all_coords.begin(), all_coords.end(), width_, height_, padding_);
-        for (const auto& line : GetBusLines(buses, sp)) {
+        for (const auto& line : RenderBusLines(buses, sp)) {
             result.Add(line);
         }
-        for (const auto& name : GetBusNames(buses, sp)) {
+        for (const auto& name : RenderBusNames(buses, sp)) {
             result.Add(name);
         }
-        for (const auto& circle : GetStopCircles(all_stops, sp)) {
+        for (const auto& circle : RenderStopCircles(all_stops, sp)) {
             result.Add(circle);
         }
-        for (const auto& name : GetStopNames(all_stops, sp)) {
+        for (const auto& name : RenderStopNames(all_stops, sp)) {
             result.Add(name);
         }
         return result;

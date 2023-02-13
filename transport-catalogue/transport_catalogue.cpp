@@ -26,6 +26,7 @@ void TransportCatalogue::AddBus(std::string_view name, std::vector<std::string> 
 		buses_of_stop_[stop].insert(&all_buses_.back());
 	}
 }
+
 void TransportCatalogue::AddStop(std::string_view name, const geo::Coordinates& coordinates) {
 	auto stop_ptr = FindStop(name);
 	if (stop_ptr == nullptr) {
@@ -36,6 +37,7 @@ void TransportCatalogue::AddStop(std::string_view name, const geo::Coordinates& 
 		stop_ptr->coordinates.lng = coordinates.lng;
 	}
 }
+
 void TransportCatalogue::SetDistance(std::string_view name_from, std::string_view name_to, double distance) {
 	auto name_from_ptr = FindStop(name_from);
 	auto name_to_ptr = FindStop(name_to);
@@ -52,6 +54,7 @@ void TransportCatalogue::SetDistance(std::string_view name_from, std::string_vie
 		all_distances_[stop_pair] = distance;
 	}
 }
+
 const Bus* TransportCatalogue::FindBus(const std::string_view name) const {
 	auto it = std::find_if(all_buses_.begin(), all_buses_.end(), [&name](const Bus& bus) {
 		return bus.name == name;
@@ -62,6 +65,7 @@ const Bus* TransportCatalogue::FindBus(const std::string_view name) const {
 	const Bus* result = &(*it);
 	return result;
 }
+
 const Stop* TransportCatalogue::GetStop(std::string_view name) const {
 	auto it = std::find_if(all_stops_.begin(), all_stops_.end(), [&name](const Stop& stop) {
 		return stop.name == name;
@@ -72,6 +76,7 @@ const Stop* TransportCatalogue::GetStop(std::string_view name) const {
 	const Stop* result = &(*it);
 	return result;
 }
+
 Stop* TransportCatalogue::FindStop(std::string_view name) {
 	auto it = std::find_if(all_stops_.begin(), all_stops_.end(), [&name](const Stop& stop) {
 		return stop.name == name;
@@ -82,6 +87,7 @@ Stop* TransportCatalogue::FindStop(std::string_view name) {
 	Stop* result = &(*it);
 	return result;
 }
+
 const std::set<std::string_view> TransportCatalogue::GetBusesOfStop(const Stop* stop) const {
 	std::set<std::string_view> result;
 	if (!buses_of_stop_.count(stop)) {
@@ -92,6 +98,7 @@ const std::set<std::string_view> TransportCatalogue::GetBusesOfStop(const Stop* 
 	}
 	return result;
 }
+
 const std::vector<const Bus*> TransportCatalogue::GetAllBuses() const {
 	std::vector<const Bus*> result;
 	result.reserve(all_buses_.size());

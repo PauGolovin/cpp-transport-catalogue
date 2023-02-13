@@ -3,12 +3,13 @@
 using namespace std::literals;
 
 namespace json_reader {
+
 	void InputCommand(std::istream& is, std::ostream& os, transport_catalogue::TransportCatalogue& tc) {
 		json::Document doc = json::Load(is);
 		InputQueue iq(tc);
 		renderer::MapRenderer mr(tc);
 		StatQueue sq(tc, mr, os);
-		for (const auto [key, queries] : doc.GetRoot().AsMap()) {
+		for (const auto [key, queries] : doc.GetRoot().AsDict()) {
 			if (key == "base_requests") {
 				for (auto query : queries.AsArray()) {
 					iq.DistributeCommand(query);
@@ -33,7 +34,7 @@ namespace json_reader {
 	// ----- InputQueue -----
 
 	void InputQueue::DistributeCommand(json::Node& node) {
-		std::string request_type = node.AsMap().at("type"s).AsString();
+		std::string request_type = node.AsDict().at("type"s).AsString();
 		if (request_type == "Stop"s) {
 			stops_queue_.push_back(std::move(node));
 			return;
@@ -44,30 +45,34 @@ namespace json_reader {
 		}
 		throw std::invalid_argument("Invalid query"s);
 	}
+
 	void InputQueue::QueuePromotion() {
 		AddStops();
 		AddBuses();
 	}
+
 	void InputQueue::AddStops() {
 		while (!stops_queue_.empty()) {
-			tc_.AddStop(stops_queue_.front().AsMap().at("name"s).AsString(),
-				{ stops_queue_.front().AsMap().at("latitude"s).AsDouble(),
-				stops_queue_.front().AsMap().at("longitude"s).AsDouble() });
-			if (stops_queue_.front().AsMap().find("road_distances"s) != stops_queue_.front().AsMap().end()) {
-				for (const auto [stop, distance] : stops_queue_.front().AsMap().at("road_distances"s).AsMap()) {
-					tc_.SetDistance(stops_queue_.front().AsMap().at("name"s).AsString(), stop, distance.AsInt());
+			auto name = stops_queue_.front().AsDict().at("name"s).AsString();
+			auto lat = stops_queue_.front().AsDict().at("latitude"s).AsDouble();
+			auto lng = stops_queue_.front().AsDict().at("longitude"s).AsDouble();
+			tc_.AddStop(name, { lat, lng });
+			if (stops_queue_.front().AsDict().find("road_distances"s) != stops_queue_.front().AsDict().end()) {
+				for (const auto [stop, distance] : stops_queue_.front().AsDict().at("road_distances"s).AsDict()) {
+					tc_.SetDistance(stops_queue_.front().AsDict().at("name"s).AsString(), stop, distance.AsInt());
 				}
 			}
 			stops_queue_.pop_front();
 		}
 	}
+
 	std::vector<std::string> MakeVectorOfStops(const json::Node& node) {
 		std::vector<std::string> result;
-		auto stops = node.AsMap().at("stops"s).AsArray();
+		auto stops = node.AsDict().at("stops"s).AsArray();
 		for (const auto stop : stops) {
 			result.push_back(stop.AsString());
 		}
-		if (!node.AsMap().at("is_roundtrip"s).AsBool()) {
+		if (!node.AsDict().at("is_roundtrip"s).AsBool()) {
 			size_t first_position = result.size() - 2;
 			for (int i = first_position; i >= 0; --i) {
 				result.push_back(result[i]);
@@ -75,10 +80,11 @@ namespace json_reader {
 		}
 		return result;
 	}
+
 	void InputQueue::AddBuses() {
 		while (!bus_queue_.empty()) {
-			tc_.AddBus(bus_queue_.front().AsMap().at("name"s).AsString(), MakeVectorOfStops(bus_queue_.front()), 
-				bus_queue_.front().AsMap().at("is_roundtrip"s).AsBool());
+			tc_.AddBus(bus_queue_.front().AsDict().at("name"s).AsString(), MakeVectorOfStops(bus_queue_.front()), 
+				bus_queue_.front().AsDict().at("is_roundtrip"s).AsBool());
 			bus_queue_.pop_front();
 		}
 	}
@@ -88,6 +94,7 @@ namespace json_reader {
 	void StatQueue::DistributeCommand(json::Node& node) {
 		output_queue_.push_back(std::move(node));
 	}
+
 	void StatQueue::QueuePromotion() {
 		stat_reader::RequestHandler rh(tc_, mr_);
 		if (output_queue_.empty()) {

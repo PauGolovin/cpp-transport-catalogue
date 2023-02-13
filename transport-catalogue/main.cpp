@@ -57,6 +57,7 @@ void Test() {
         "\t}\n"
         "]\n"
     };
+    cout << oss.str() << endl;
     assert(oss.str() == answer.str());
     cout << "Test successfull" << endl;
 }
