@@ -4,7 +4,7 @@ using namespace std::literals;
 
 namespace json {
 
-	KeyItemContext Builder::Key(std::string key) {
+	Builder::KeyItemContext Builder::Key(std::string key) {
 		if (root_.has_value()) {
 			throw std::logic_error("Build finished."s);
 		}
@@ -30,7 +30,7 @@ namespace json {
 		return *this;
 	}
 
-	DictItemContext Builder::StartDict() {
+	Builder::DictItemContext Builder::StartDict() {
 		if (root_) {
 			throw std::logic_error("Build finished."s);
 		}
@@ -55,7 +55,7 @@ namespace json {
 		return *this;
 	}
 
-	ArrayItemContext Builder::StartArray() {
+	Builder::ArrayItemContext Builder::StartArray() {
 		if (root_) {
 			throw std::logic_error("Build finished."s);
 		}
@@ -138,33 +138,29 @@ namespace json {
 
 	// ItemContext Methods
 
-	KeyItemContext ItemContext::Key(std::string key) {
+	Builder::KeyItemContext Builder::ItemContext::Key(std::string key) {
 		return builder_.Key(key);
 	}
-	DictItemContext ItemContext::StartDict() {
+	Builder::DictItemContext Builder::ItemContext::StartDict() {
 		return builder_.StartDict();
 	}
-	Builder& ItemContext::EndDict() {
+	Builder& Builder::ItemContext::EndDict() {
 		return builder_.EndDict();
 	}
-	ArrayItemContext ItemContext::StartArray() {
+	Builder::ArrayItemContext Builder::ItemContext::StartArray() {
 		return builder_.StartArray();
 	}
-	Builder& ItemContext::EndArray() {
+	Builder& Builder::ItemContext::EndArray() {
 		return builder_.EndArray();
 	}
 
 	// Value - methods
 
-	ValueItemContext_Key KeyItemContext::Value(Node::Value value) {
+	Builder::DictItemContext Builder::KeyItemContext::Value(Node::Value value) {
 		builder_.Value(value);
 		return { builder_ };
 	}
-	ValueItemContext_Arr ArrayItemContext::Value(Node::Value value) {
-		builder_.Value(value);
-		return { builder_ };
-	}
-	ValueItemContext_Arr ValueItemContext_Arr::Value(Node::Value value) {
+	Builder::ArrayItemContext Builder::ArrayItemContext::Value(Node::Value value) {
 		builder_.Value(value);
 		return { builder_ };
 	}
