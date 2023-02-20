@@ -2,6 +2,8 @@
 
 ## **Overview**
 
+This is educational project completed during the course of training at Yandex Practicum.
+
 Transport Catalogue - a system for storing and displaying information about bus routes, which implements:
 * Processing requests and outputting results in JSON format
 * Graphical output in SVG format
@@ -142,3 +144,9 @@ The answer to this query will be given in the form of a dictionary:
 The *"map"* key is a string with a map image in SVG format. An example of an SVG image of a route map:
 
 ![](Example.svg)
+
+_____
+______
+## **System requirements**
+
+C++ compiler supporting C++17 standard or later.
