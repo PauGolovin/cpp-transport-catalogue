@@ -10,6 +10,19 @@ Transport Catalogue - a system for storing and displaying information about bus 
 _____
 ______
 ## **Description**
+
+### **Principle of operation**
+
+Create an instance of the TransportCatalogue class. Interaction with an instance of the TransportCatalogue class is carried out using the json_reader::InputCommand function.
+
+The function arguments are:
+* istream&, which passes requests to the TransportCatalogue in json format to the function
+* ostream&, which receives responses to requests in json format
+* TransportCatalogue - directory to which requests are addressed
+
+See below for more information on working with TransportCatalogue.
+
+____
 The program receives a json file as input containing requests for filling the Transport Catalogue database (*base requests*) and requests for information from the database (*stat requests*). Top level structure of json file:
 ```
 {
