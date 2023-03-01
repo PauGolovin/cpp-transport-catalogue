@@ -2,8 +2,6 @@
 
 ## **Overview**
 
-This is educational project completed during the course of training at Yandex Practicum.
-
 Transport Catalogue - a system for storing and displaying information about bus routes, which implements:
 * Processing requests and outputting results in JSON format
 * Graphical output in SVG format
