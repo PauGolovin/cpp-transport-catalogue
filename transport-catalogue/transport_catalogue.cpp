@@ -20,8 +20,10 @@ void TransportCatalogue::AddBus(std::string_view name, std::vector<std::string> 
 		}
 		stops_result.push_back(stop_ptr);
 	}
+
 	auto distance = DefineRouteDistance(stops_result);
 	all_buses_.push_back({ std::string{ name }, stops_result, distance, is_roundtrip });
+
 	for (const auto stop : stops_result) {
 		buses_of_stop_[stop].insert(&all_buses_.back());
 	}
@@ -53,6 +55,23 @@ void TransportCatalogue::SetDistance(std::string_view name_from, std::string_vie
 	else {
 		all_distances_[stop_pair] = distance;
 	}
+}
+
+void TransportCatalogue::SetRoutingSettings(int bus_wait_time, int bus_velocity) {
+	if (bus_wait_time <= 0) {
+		throw std::logic_error("Bus waiting time must be a positive number."s);
+	}
+	if (bus_wait_time > 1000) {
+		throw std::logic_error("Bus waiting time is too big."s);
+	}
+	if (bus_velocity <= 0) {
+		throw std::logic_error("Bus velocity must be a positive number."s);
+	}
+	if (bus_velocity > 1000) {
+		throw std::logic_error("Bus velocity is too big."s);
+	}
+	bus_wait_time_ = bus_wait_time;
+	bus_velocity_ = bus_velocity;
 }
 
 const Bus* TransportCatalogue::FindBus(const std::string_view name) const {
@@ -107,6 +126,14 @@ const std::vector<const Bus*> TransportCatalogue::GetAllBuses() const {
 	}
 	std::sort(result.begin(), result.end(), [](const Bus* lhs, const Bus* rhs) { return lhs->name < rhs->name; });
 	return result;
+}
+
+const std::unordered_map<std::pair<const Stop*, const Stop*>, double, TransportCatalogue::DistanceHasher>& TransportCatalogue::GetDistances() const {
+	return all_distances_;
+}
+
+std::pair<int, int> TransportCatalogue::GetRoutingSettings() const {
+	return { bus_wait_time_, bus_velocity_ };
 }
 
 Bus::Distance TransportCatalogue::DefineRouteDistance(std::vector<const Stop*>& stops) {

@@ -4,6 +4,10 @@ using namespace std::literals;
 
 namespace json_reader {
 
+	void SetRoutingSettings(transport_catalogue::TransportCatalogue& tc, json::Dict settings) {
+		tc.SetRoutingSettings(settings.at("bus_wait_time"s).AsInt(), settings.at("bus_velocity"s).AsInt());
+	}
+
 	void InputCommand(std::istream& is, std::ostream& os, transport_catalogue::TransportCatalogue& tc) {
 		json::Document doc = json::Load(is);
 		InputQueue iq(tc);
@@ -22,6 +26,9 @@ namespace json_reader {
 			}
 			else if (key == "render_settings"s) {
 				mr.SetMapRenderer(queries);
+			}
+			else if (key == "routing_settings"s) {
+				SetRoutingSettings(tc, queries.AsDict());
 			}
 			else {
 				throw std::invalid_argument("Invalid query array"s);

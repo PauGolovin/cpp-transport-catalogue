@@ -14,6 +14,9 @@ namespace stat_reader {
 		if (node.AsDict().at("type"s).AsString() == "Map"s) {
 			return MakeMapNode(node);
 		}
+		if (node.AsDict().at("type"s).AsString() == "Route"s) {
+			return MakeRouteNode(node);
+		}
 		throw std::logic_error("invalid query"s);
 	}
 
@@ -79,4 +82,13 @@ namespace stat_reader {
 				EndDict().
 			Build();
 	}
+
+	json::Node RequestHandler::MakeRouteNode(const json::Node& node) {
+		if (router_ == nullptr) {
+			router_ = new transport_router::Router(tc_);
+		}
+		return router_->GetResultJson(node);
+	}
+
+	
 }
