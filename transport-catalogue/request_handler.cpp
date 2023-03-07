@@ -87,7 +87,54 @@ namespace stat_reader {
 		if (router_ == nullptr) {
 			router_ = new transport_router::Router(tc_);
 		}
-		return router_->GetResultJson(node);
+		
+		std::string_view from_name = node.AsDict().at("from"s).AsString();
+		std::string_view to_name = node.AsDict().at("to"s).AsString();
+
+		auto route = router_->GetRouteInfo(from_name, to_name);
+
+		if (!route) {
+			return json::Builder{}.
+					StartDict().
+						Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
+						Key("error_message"s).Value("not found"s).
+					EndDict().
+				Build();
+		}
+
+		auto json_route = json::Builder{};
+		json_route.StartDict().
+			Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
+			Key("total_time"s).Value(route->weight).
+			Key("items"s).StartArray();
+
+		auto [bus_wait_time, bus_velocity] = tc_.GetRoutingSettings();
+		auto graph = router_->GetGraph();
+		auto id_stop = router_->GetIdStop();
+		auto edge_info = router_->GetEdgeInfo();
+
+		for (const auto& edge : route->edges) {
+			auto edge_from_graph = graph.GetEdge(edge);
+
+			json_route.StartDict().
+					Key("type"s).Value("Wait"s).
+					Key("stop_name"s).Value(std::string{ id_stop.at(edge_from_graph.from) }).
+					Key("time"s).Value(bus_wait_time).
+				EndDict();
+
+			auto [bus_name, stops_count] = edge_info[edge];
+
+			json_route.StartDict().
+					Key("type"s).Value("Bus"s).
+					Key("bus"s).Value(std::string{ bus_name }).
+					Key("span_count"s).Value(stops_count).
+					Key("time"s).Value(edge_from_graph.weight - bus_wait_time).
+				EndDict();
+		}
+
+		json_route.EndArray().EndDict();
+
+		return json_route.Build();
 	}
 
 	

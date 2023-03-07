@@ -1,9 +1,9 @@
 #pragma once
-#include "json.h"
-#include "json_builder.h"
+
 #include "transport_catalogue.h"
 #include "router.h"
 
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -18,8 +18,14 @@ namespace transport_router {
         Router() = delete;
 
         Router(const transport_catalogue::TransportCatalogue& tc);
-          
-        json::Node GetResultJson(const json::Node& node) const;
+
+        std::optional<graph::Router<double>::RouteInfo> GetRouteInfo(std::string_view from_name, std::string_view to_name) const;
+
+        const Graph& GetGraph() const;
+
+        const std::map<graph::VertexId, std::string_view>& GetIdStop() const;
+
+        const std::vector<std::pair<std::string_view, int>>& GetEdgeInfo() const;
 
         ~Router() {
             delete router_ptr_;
@@ -27,6 +33,9 @@ namespace transport_router {
 
     private:
         void BuildGraph(const transport_catalogue::TransportCatalogue& tc);
+
+        std::pair<graph::VertexId, graph::VertexId> GetStopsIds(const transport_catalogue::TransportCatalogue::Bus* bus, 
+            int index_from, int index_to);
 
         int bus_wait_time_ = 0;
         double bus_velocity_ = 0;
