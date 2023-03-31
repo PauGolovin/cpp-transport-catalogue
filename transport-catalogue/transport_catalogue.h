@@ -55,11 +55,16 @@ namespace transport_catalogue {
 		const Stop* GetStop(std::string_view name) const;
 		const std::set<std::string_view> GetBusesOfStop(const Stop* stop) const;
 		const std::vector<const Bus*> GetAllBuses() const;
+		const std::vector<const Bus*> GetAllBuses_not_sorted() const;
+		const std::vector<const Stop*> GetAllStops() const;
 
 		const std::unordered_map<std::pair<const Stop*, const Stop*>, double, DistanceHasher>& GetDistances() const;
+		const std::unordered_map<const Stop*, std::vector<std::pair<const Stop*, int>>, StopHasher>& GetDistancesToSerialization() const;
+
 		std::pair<int, int> GetRoutingSettings() const;
 
 		int GetStopsCount() const { return all_stops_.size(); };
+		int GetBusesCount() const { return all_buses_.size(); };
 
 	private:
 		struct BusPtrHasher {
@@ -80,6 +85,8 @@ namespace transport_catalogue {
 		std::deque<Bus> all_buses_;
 		std::unordered_map<const Stop*, std::unordered_set<const Bus*, BusPtrHasher>, StopHasher> buses_of_stop_;
 		std::unordered_map<std::pair<const Stop*, const Stop*>, double, DistanceHasher> all_distances_;
+
+		std::unordered_map<const Stop*, std::vector<std::pair<const Stop*, int>>, StopHasher> stop_distances_;
 
 		int bus_wait_time_ = 1;
 		int bus_velocity_ = 1;

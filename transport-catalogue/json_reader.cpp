@@ -8,11 +8,12 @@ namespace json_reader {
 		tc.SetRoutingSettings(settings.at("bus_wait_time"s).AsInt(), settings.at("bus_velocity"s).AsInt());
 	}
 
-	void InputCommand(std::istream& is, std::ostream& os, transport_catalogue::TransportCatalogue& tc) {
-		json::Document doc = json::Load(is);
+	void InputCommand(const json::Document& doc, std::ostream& os, transport_catalogue::TransportCatalogue& tc, 
+		renderer::MapRenderer& mr, transport_router::Router& router) {
+
 		InputQueue iq(tc);
-		renderer::MapRenderer mr(tc);
-		StatQueue sq(tc, mr, os);
+		StatQueue sq(tc, mr, router, os);
+
 		for (const auto [key, queries] : doc.GetRoot().AsDict()) {
 			if (key == "base_requests") {
 				for (auto query : queries.AsArray()) {
@@ -30,11 +31,20 @@ namespace json_reader {
 			else if (key == "routing_settings"s) {
 				SetRoutingSettings(tc, queries.AsDict());
 			}
+			else if (key == "serialization_settings"s) {
+				continue;
+			}
 			else {
 				throw std::invalid_argument("Invalid query array"s);
 			}
 		}
+
 		iq.QueuePromotion();
+
+		if (!router.IsBuilt()) {
+			router.SetRouter(tc);
+		}
+
 		sq.QueuePromotion();
 	}
 
@@ -90,7 +100,7 @@ namespace json_reader {
 
 	void InputQueue::AddBuses() {
 		while (!bus_queue_.empty()) {
-			tc_.AddBus(bus_queue_.front().AsDict().at("name"s).AsString(), MakeVectorOfStops(bus_queue_.front()), 
+			tc_.AddBus(bus_queue_.front().AsDict().at("name"s).AsString(), MakeVectorOfStops(bus_queue_.front()),
 				bus_queue_.front().AsDict().at("is_roundtrip"s).AsBool());
 			bus_queue_.pop_front();
 		}
@@ -103,7 +113,7 @@ namespace json_reader {
 	}
 
 	void StatQueue::QueuePromotion() {
-		stat_reader::RequestHandler rh(tc_, mr_);
+		stat_reader::RequestHandler rh(tc_, mr_, router_);
 		if (output_queue_.empty()) {
 			return;
 		}

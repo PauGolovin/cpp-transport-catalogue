@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package serialize;
+
+message Edge {
+    int32 from = 1;
+    int32 to = 2;
+    double weight = 3;
+}
+
+message Vertex {
+    repeated int32 edge_id = 1;
+}
+
+message Graph {
+    repeated Edge edge = 1;
+    repeated Vertex vertex = 2;
+}

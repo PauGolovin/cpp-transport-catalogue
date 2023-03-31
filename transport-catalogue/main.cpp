@@ -1,69 +1,47 @@
 #include "json_reader.h"
+#include "serialization.h"
 
 #include <sstream>
 #include <cassert>
+#include <iostream>
 
 using namespace std;
 using namespace transport_catalogue;
 
-void Test() {
-    TransportCatalogue tc;
-    stringstream oss;
-    istringstream iss{
-        "{\n"
-        "\"base_requests\": [\n"
-        "{\n"
-        "\"type\": \"Bus\",\n"
-        "\"name\" : \"114\",\n"
-        "\"stops\" : [\"Marine Station\", \"Riviera Bridge\"] ,\n"
-        "\"is_roundtrip\" : false\n"
-        "},\n"
-        "{\n"
-        "\"type\": \"Stop\",\n"
-        "\"name\" : \"Riviera Bridge\",\n"
-        "\"latitude\" : 43.587795,\n"
-        "\"longitude\" : 39.716901,\n"
-        "\"road_distances\" : {\"Marine Station\": 850}\n"
-        "},\n"
-        "{\n"
-        "\"type\": \"Stop\",\n"
-        "\"name\" : \"Marine Station\",\n"
-        "\"latitude\" : 43.581969,\n"
-        "\"longitude\" : 39.719848,\n"
-        "\"road_distances\" : {\"Riviera Bridge\": 850}\n"
-        "}\n"
-        "],\n"
-        "\"stat_requests\": [\n"
-        "{ \"id\": 1, \"type\" : \"Stop\", \"name\" : \"Riviera Bridge\" },\n"
-        "{ \"id\": 2, \"type\" : \"Bus\", \"name\" : \"114\" }\n"
-        "]\n"
-        "}"
-    };
-    json_reader::InputCommand(iss, oss, tc);
-    istringstream answer{
-        "[\n"
-        "\t{\n"
-        "\t\t\"buses\" : [\n"
-        "\t\t\t\"114\"\n"
-        "\t\t],\n"
-        "\t\t\"request_id\" : 1\n"
-        "\t},\n"
-        "\t{\n"
-        "\t\t\"curvature\" : 1.23199,\n"
-        "\t\t\"request_id\" : 2,\n"
-        "\t\t\"route_length\" : 1700,\n"
-        "\t\t\"stop_count\" : 3,\n"
-        "\t\t\"unique_stop_count\" : 2\n"
-        "\t}\n"
-        "]\n"
-    };
-    cout << oss.str() << endl;
-    assert(oss.str() == answer.str());
-    cout << "Test successfull" << endl;
+void PrintUsage(std::ostream& stream = std::cerr) {
+    stream << "Usage: transport_catalogue [make_base|process_requests]\n"sv;
 }
 
-int main() {
-    //Test();
-    TransportCatalogue tc;
-    json_reader::InputCommand(cin, cout, tc);
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        PrintUsage();
+        return 1;
+    }
+
+    const std::string_view mode(argv[1]);
+
+    if (mode == "make_base"sv) {
+        TransportCatalogue tc;
+        renderer::MapRenderer mr(tc);
+        transport_router::Router router;
+        json::Document doc = json::Load(cin);
+        json_reader::InputCommand(doc, cout, tc, mr, router);
+
+        string path = doc.GetRoot().AsDict().at("serialization_settings"s).AsDict().at("file"s).AsString();
+        Serialization::Serialize(tc, mr, router, path);
+    }
+    else if (mode == "process_requests"sv) {
+        json::Document doc = json::Load(cin);
+        string path = doc.GetRoot().AsDict().at("serialization_settings"s).AsDict().at("file"s).AsString();
+        TransportCatalogue tc;
+        renderer::MapRenderer mr(tc);
+        transport_router::Router router;
+        Serialization::Deserialize(tc, mr, router, path);
+
+        json_reader::InputCommand(doc, cout, tc, mr, router);
+    }
+    else {
+        PrintUsage();
+        return 1;
+    }
 }

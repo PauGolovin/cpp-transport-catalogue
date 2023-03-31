@@ -8,7 +8,8 @@
 #include "map_renderer.h"
 
 namespace json_reader {
-	void InputCommand(std::istream& is, std::ostream& os, transport_catalogue::TransportCatalogue& tc);
+	void InputCommand(const json::Document& doc, std::ostream& os, transport_catalogue::TransportCatalogue& tc,
+		renderer::MapRenderer& mr, transport_router::Router& router);
 
 	class QueueQuery {
 		virtual void DistributeCommand(json::Node& node) = 0;
@@ -32,10 +33,11 @@ namespace json_reader {
 	// Обработка на запросы к БД и получение ответов в ostream
 	class StatQueue : public QueueQuery {
 	public:
-		explicit StatQueue(transport_catalogue::TransportCatalogue& tc, renderer::MapRenderer& mr, std::ostream& os) 
+		explicit StatQueue(transport_catalogue::TransportCatalogue& tc, renderer::MapRenderer& mr, transport_router::Router& router, std::ostream& os)
 			: tc_(tc)
 			, mr_(mr)
-			, os_(os) 
+			, router_(router)
+			, os_(os)
 		{}
 		void DistributeCommand(json::Node& node) override;
 		void QueuePromotion() override;
@@ -43,6 +45,7 @@ namespace json_reader {
 	private:
 		transport_catalogue::TransportCatalogue& tc_;
 		renderer::MapRenderer& mr_;
+		transport_router::Router& router_;
 		std::ostream& os_;
 		std::deque<json::Node> output_queue_;
 	};

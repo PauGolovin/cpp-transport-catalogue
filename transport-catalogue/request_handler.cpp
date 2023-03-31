@@ -24,10 +24,10 @@ namespace stat_reader {
 		const transport_catalogue::TransportCatalogue::Bus* bus = tc_.FindBus(node.AsDict().at("name"s).AsString());
 		if (bus == nullptr) {
 			return json::Builder{}.
-					StartDict().
-						Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
-						Key("error_message"s).Value("not found"s).
-					EndDict().
+				StartDict().
+				Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
+				Key("error_message"s).Value("not found"s).
+				EndDict().
 				Build();
 		}
 
@@ -37,13 +37,13 @@ namespace stat_reader {
 		unique_stops.erase(last, unique_stops.end());
 
 		return json::Builder{}.
-				StartDict().
-					Key("curvature"s).Value(bus->distances.curvature).
-					Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
-					Key("route_length"s).Value(bus->distances.route_distance).
-					Key("stop_count"s).Value(static_cast<int>(bus->stops.size())).
-					Key("unique_stop_count"s).Value(static_cast<int>(unique_stops.size())).
-				EndDict().
+			StartDict().
+			Key("curvature"s).Value(bus->distances.curvature).
+			Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
+			Key("route_length"s).Value(bus->distances.route_distance).
+			Key("stop_count"s).Value(static_cast<int>(bus->stops.size())).
+			Key("unique_stop_count"s).Value(static_cast<int>(unique_stops.size())).
+			EndDict().
 			Build();
 
 	}
@@ -52,10 +52,10 @@ namespace stat_reader {
 		const transport_catalogue::TransportCatalogue::Stop* stop = tc_.GetStop(node.AsDict().at("name"s).AsString());
 		if (stop == nullptr) {
 			return json::Builder{}.
-					StartDict().
-						Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
-						Key("error_message"s).Value("not found"s).
-					EndDict().
+				StartDict().
+				Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
+				Key("error_message"s).Value("not found"s).
+				EndDict().
 				Build();
 		}
 		auto buses = tc_.GetBusesOfStop(stop);
@@ -65,10 +65,10 @@ namespace stat_reader {
 		}
 
 		return json::Builder{}.
-				StartDict().
-					Key("buses"s).Value(buses_result).
-					Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
-				EndDict().
+			StartDict().
+			Key("buses"s).Value(buses_result).
+			Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
+			EndDict().
 			Build();
 	}
 
@@ -76,29 +76,26 @@ namespace stat_reader {
 		std::stringstream ss;
 		mr_.PrintSvgDocument(ss);
 		return json::Builder{}.
-				StartDict().
-					Key("map"s).Value(ss.str()).
-					Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
-				EndDict().
+			StartDict().
+			Key("map"s).Value(ss.str()).
+			Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
+			EndDict().
 			Build();
 	}
 
 	json::Node RequestHandler::MakeRouteNode(const json::Node& node) {
-		if (router_ == nullptr) {
-			router_ = new transport_router::Router(tc_);
-		}
-		
+
 		std::string_view from_name = node.AsDict().at("from"s).AsString();
 		std::string_view to_name = node.AsDict().at("to"s).AsString();
 
-		auto route = router_->GetRouteInfo(from_name, to_name);
+		auto route = router_.GetRouteInfo(from_name, to_name);
 
 		if (!route) {
 			return json::Builder{}.
-					StartDict().
-						Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
-						Key("error_message"s).Value("not found"s).
-					EndDict().
+				StartDict().
+				Key("request_id"s).Value(node.AsDict().at("id"s).AsInt()).
+				Key("error_message"s).Value("not found"s).
+				EndDict().
 				Build();
 		}
 
@@ -109,26 +106,26 @@ namespace stat_reader {
 			Key("items"s).StartArray();
 
 		auto [bus_wait_time, bus_velocity] = tc_.GetRoutingSettings();
-		auto graph = router_->GetGraph();
-		auto id_stop = router_->GetIdStop();
-		auto edge_info = router_->GetEdgeInfo();
+		auto graph = router_.GetGraph();
+		auto id_stop = router_.GetIdStop();
+		auto edge_info = router_.GetEdgeInfo();
 
 		for (const auto& edge : route->edges) {
 			auto edge_from_graph = graph.GetEdge(edge);
 
 			json_route.StartDict().
-					Key("type"s).Value("Wait"s).
-					Key("stop_name"s).Value(std::string{ id_stop.at(edge_from_graph.from) }).
-					Key("time"s).Value(bus_wait_time).
+				Key("type"s).Value("Wait"s).
+				Key("stop_name"s).Value(std::string{ id_stop.at(edge_from_graph.from) }).
+				Key("time"s).Value(bus_wait_time).
 				EndDict();
 
 			auto [bus_name, stops_count] = edge_info[edge];
 
 			json_route.StartDict().
-					Key("type"s).Value("Bus"s).
-					Key("bus"s).Value(std::string{ bus_name }).
-					Key("span_count"s).Value(stops_count).
-					Key("time"s).Value(edge_from_graph.weight - bus_wait_time).
+				Key("type"s).Value("Bus"s).
+				Key("bus"s).Value(std::string{ bus_name }).
+				Key("span_count"s).Value(stops_count).
+				Key("time"s).Value(edge_from_graph.weight - bus_wait_time).
 				EndDict();
 		}
 
@@ -137,5 +134,5 @@ namespace stat_reader {
 		return json_route.Build();
 	}
 
-	
+
 }

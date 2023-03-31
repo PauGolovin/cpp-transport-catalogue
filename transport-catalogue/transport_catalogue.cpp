@@ -55,6 +55,8 @@ void TransportCatalogue::SetDistance(std::string_view name_from, std::string_vie
 	else {
 		all_distances_[stop_pair] = distance;
 	}
+
+	stop_distances_[name_from_ptr].push_back({ name_to_ptr, distance });
 }
 
 void TransportCatalogue::SetRoutingSettings(int bus_wait_time, int bus_velocity) {
@@ -128,8 +130,30 @@ const std::vector<const Bus*> TransportCatalogue::GetAllBuses() const {
 	return result;
 }
 
+const std::vector<const Bus*> TransportCatalogue::GetAllBuses_not_sorted() const {
+	std::vector<const Bus*> result;
+	result.reserve(all_buses_.size());
+	for (const auto& bus : all_buses_) {
+		result.push_back(&bus);
+	}
+	return result;
+}
+
+const std::vector<const Stop*> TransportCatalogue::GetAllStops() const {
+	std::vector<const Stop*> result;
+	result.reserve(all_stops_.size());
+	for (const auto& stop : all_stops_) {
+		result.push_back(&stop);
+	}
+	return result;
+}
+
 const std::unordered_map<std::pair<const Stop*, const Stop*>, double, TransportCatalogue::DistanceHasher>& TransportCatalogue::GetDistances() const {
 	return all_distances_;
+}
+
+const std::unordered_map<const Stop*, std::vector<std::pair<const Stop*, int>>, TransportCatalogue::StopHasher>& TransportCatalogue::GetDistancesToSerialization() const {
+	return stop_distances_;
 }
 
 std::pair<int, int> TransportCatalogue::GetRoutingSettings() const {

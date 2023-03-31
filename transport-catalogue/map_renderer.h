@@ -1,6 +1,7 @@
 #pragma once
 
 #include "json.h"
+#include "json_builder.h"
 #include "geo.h"
 #include "svg.h"
 #include "transport_catalogue.h"
@@ -29,6 +30,8 @@ namespace renderer {
         std::vector<svg::Text> RenderStopNames(const std::map<std::string_view, const transport_catalogue::TransportCatalogue::Stop*>& stops, const SphereProjector& sp) const;
 
         void PrintSvgDocument(std::ostream& os) const;
+
+        json::Node GetRenderSettings() const;
 
     private:
         svg::Document GetSvgDocument() const;

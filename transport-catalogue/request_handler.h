@@ -13,15 +13,13 @@ namespace stat_reader {
 
 	class RequestHandler {
 	public:
-		RequestHandler(const transport_catalogue::TransportCatalogue& tc, renderer::MapRenderer& mr) : tc_(tc), mr_(mr){}
+		RequestHandler(const transport_catalogue::TransportCatalogue& tc, renderer::MapRenderer& mr, const transport_router::Router& router)
+			: tc_(tc)
+			, mr_(mr)
+			, router_(router) 
+		{}
 
 		json::Node MakeOutputNode(const json::Node& node);
-
-		~RequestHandler() {
-			if (router_ != nullptr) {
-				delete router_;
-			}
-		}
 
 	private:
 		json::Node MakeBusNode(const json::Node& node);
@@ -31,7 +29,6 @@ namespace stat_reader {
 
 		const transport_catalogue::TransportCatalogue& tc_;
 		renderer::MapRenderer& mr_;
-
-		transport_router::Router* router_ = nullptr;
+		const transport_router::Router& router_;
 	};
 }
